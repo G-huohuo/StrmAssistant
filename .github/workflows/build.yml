@@ -18,11 +18,11 @@ jobs:
         with:
           dotnet-version: '6.x'
 
-      # 缓存NuGet包，大幅提升构建速度
+      # 缓存 NuGet 包，提升构建速度（Windows 推荐用 NUGET_PACKAGES）
       - name: Cache NuGet packages
         uses: actions/cache@v4
         with:
-          path: ~/.nuget/packages
+          path: ${{ env.NUGET_PACKAGES }}
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
@@ -33,10 +33,16 @@ jobs:
       - name: Build the project
         run: dotnet build StrmAssistant/StrmAssistant.csproj --no-restore --configuration Release -p:UseSharedCompilation=false
 
-      - name: Upload artifact
+      # 可选：列出输出，方便你在日志里确认产物路径
+      - name: List build output
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -Force "StrmAssistant\bin\Release" | Select-Object FullName
+
+      - name: Upload artifact (build output)
         uses: actions/upload-artifact@v4
         with:
           name: StrmAssistantLite-${{ github.run_number }}
-          path: C:\Users\runneradmin\AppData\Roaming\Emby-Server\programdata\plugins\*
-          compression-level: 0  # DLL已经是二进制，不需要压缩
+          path: StrmAssistant/bin/Release/**
+          compression-level: 0  # DLL 已经是二进制，不需要压缩
           retention-days: 30
